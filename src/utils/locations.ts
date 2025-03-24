@@ -3,6 +3,9 @@
 import * as LSP from 'vscode-languageserver';
 import { FishProtocol } from './fishProtocol';
 import * as TS from 'web-tree-sitter';
+import os from 'os';
+import { pathToUri, uriToPath } from './translation';
+import { config } from '../config';
 
 export namespace Range {
 
@@ -133,8 +136,15 @@ export namespace Position {
   }
 }
 
+function convertFishConfigPath(path: string): string {
+  return path.replace(`${os.homedir()}/.config/fish`, `${config.fish_lsp_config_file_path}`);
+}
+
 export namespace Location {
-  export const create = (uri: string, range: LSP.Range): LSP.Location => LSP.Location.create(uri, range);
+  export const create = (uri: string, range: LSP.Range): LSP.Location => {
+    const path = convertFishConfigPath(uriToPath(uri));
+    return LSP.Location.create(pathToUri(path), range);
+  };
   export const is = (value: any): value is LSP.Location => LSP.Location.is(value);
   export const fromTextSpan = (resource: LSP.DocumentUri, fishTextSpan: FishProtocol.TextSpan): LSP.Location =>
     LSP.Location.create(resource, Range.fromTextSpan(fishTextSpan));

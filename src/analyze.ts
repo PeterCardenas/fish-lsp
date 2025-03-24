@@ -1,4 +1,4 @@
-import { Hover, MarkupContent, MarkupKind, Position, SymbolKind, WorkspaceSymbol, URI, Location } from 'vscode-languageserver';
+import { Hover, MarkupContent, MarkupKind, Position, SymbolKind, WorkspaceSymbol, URI } from 'vscode-languageserver';
 import Parser, { SyntaxNode, Tree } from 'web-tree-sitter';
 import * as LSP from 'vscode-languageserver';
 import { isPositionWithinRange, getChildNodes } from './utils/tree-sitter';
@@ -13,6 +13,7 @@ import { GenericTree } from './utils/generic-tree';
 import { findDefinitionSymbols } from './workspace-symbol';
 import { config } from './config';
 import { logger } from './logger';
+import { Location } from './utils/locations';
 
 export class Analyzer {
   protected parser: Parser;

@@ -1,10 +1,11 @@
 import { filterLocalSymbols, FishDocumentSymbol, isGlobalSymbol, isUniversalSymbol, symbolIsImmutable } from './document-symbol';
 import { Analyzer } from './analyze';
 import { LspDocument } from './document';
-import { Position, Location, Range, SymbolKind, TextEdit, DocumentUri, WorkspaceEdit, RenameFile } from 'vscode-languageserver';
+import { Position, Location as LspLocation, Range, SymbolKind, TextEdit, DocumentUri, WorkspaceEdit, RenameFile } from 'vscode-languageserver';
 import { getChildNodes, getRange } from './utils/tree-sitter';
 import { SyntaxNode } from 'web-tree-sitter';
 import { isCommandName } from './utils/node-types';
+import { Location } from './utils/locations';
 
 export function containsRange(range: Range, otherRange: Range): boolean {
   if (otherRange.start.line < range.start.line || otherRange.end.line < range.start.line) {
@@ -54,7 +55,7 @@ export type RenameChanges = {
   [uri: DocumentUri]: TextEdit[];
 };
 
-function findLocations(uri: string, nodes: SyntaxNode[], matchName: string): Location[] {
+function findLocations(uri: string, nodes: SyntaxNode[], matchName: string): LspLocation[] {
   const equalRanges = (a: Range, b: Range) => {
     return (
       a.start.line === b.start.line &&
@@ -75,7 +76,7 @@ function findLocations(uri: string, nodes: SyntaxNode[], matchName: string): Loc
   return uniqueRanges.map(range => Location.create(uri, range));
 }
 
-function findLocalLocations(analyzer: Analyzer, document: LspDocument, position: Position): Location[] {
+function findLocalLocations(analyzer: Analyzer, document: LspDocument, position: Position): LspLocation[] {
   const symbol = findDefinitionSymbols(analyzer, document, position).pop();
   if (!symbol) {
     return [];
@@ -100,8 +101,8 @@ function removeLocalSymbols(matchSymbol: FishDocumentSymbol, nodes: SyntaxNode[]
     return true;
   });
 }
-function findGlobalLocations(analyzer: Analyzer, document: LspDocument, position: Position): Location[] {
-  const locations: Location[] = [];
+function findGlobalLocations(analyzer: Analyzer, document: LspDocument, position: Position): LspLocation[] {
+  const locations: LspLocation[] = [];
   const symbol = analyzer.findDocumentSymbol(document, position);
   if (!symbol) {
     return [];
@@ -120,7 +121,7 @@ function findGlobalLocations(analyzer: Analyzer, document: LspDocument, position
   return locations;
 }
 
-export function getRenameLocations(analyzer: Analyzer, document: LspDocument, position: Position): Location[] {
+export function getRenameLocations(analyzer: Analyzer, document: LspDocument, position: Position): LspLocation[] {
   if (!canRenamePosition(analyzer, document, position)) {
     return [];
   }
@@ -135,7 +136,7 @@ export function getRenameLocations(analyzer: Analyzer, document: LspDocument, po
   }
 }
 
-export function getReferenceLocations(analyzer: Analyzer, document: LspDocument, position: Position): Location[] {
+export function getReferenceLocations(analyzer: Analyzer, document: LspDocument, position: Position): LspLocation[] {
   const node = analyzer.nodeAtPoint(document.uri, position.line, position.character);
   if (!node) return [];
   const symbol = analyzer.getDefinition(document, position);
@@ -153,7 +154,7 @@ export function getReferenceLocations(analyzer: Analyzer, document: LspDocument,
   }
   if (isCommandName(node)) {
     const uris = analyzer.cache.uris();
-    const locations: Location[] = [];
+    const locations: LspLocation[] = [];
     for (const uri of uris) {
       const doc = analyzer.getDocument(uri)!;
       const rootNode = analyzer.getRootNode(doc)!;

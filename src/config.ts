@@ -89,6 +89,9 @@ export const ConfigSchema = z.object({
 
   /** show startup analysis notification */
   fish_lsp_show_client_popups: z.boolean().default(true),
+
+  /** prefer a different location for config file paths if it exists */
+  fish_lsp_config_file_path: z.string().default(`${os.homedir()}/.config/fish`),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;
